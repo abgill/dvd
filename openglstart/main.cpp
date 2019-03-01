@@ -29,7 +29,7 @@ int main() {
 	GLFWwindow* window = glfwCreateWindow(width, height, "LearnOpenGL", glfwGetPrimaryMonitor(), NULL);
 	if (window == NULL)
 	{
-		std::cout << "Failed to create GLFW window" << std::endl;
+		std::cerr << "Failed to create GLFW window" << std::endl;
 		glfwTerminate();
 		return -1;
 	}
@@ -37,7 +37,7 @@ int main() {
 
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
 	{
-		std::cout << "Failed to initialize GLAD" << std::endl;
+		std::cerr << "Failed to initialize GLAD" << std::endl;
 		return -1;
 	}
 
@@ -47,16 +47,18 @@ int main() {
 
 	glEnable(GL_MULTISAMPLE);
 
+
+	//Verticies                  //texture cordinates
 	float rectangle[] = {
-		0.3f,  0.3f, 0.0f,		1.0f, 1.0f,
-		0.3f, -0.3f, 0.0f,		1.0f, 0.0f,
-		-0.3f, -0.3f, 0.0f,     0.0f, 0.0f,
-		 -0.3f, 0.3f, 0.0f,		0.0f, 1.0f, 
+		0.3f,  0.3f, 0.0f,      1.0f, 1.0f,
+		0.3f, -0.3f, 0.0f,      1.0f, 0.0f,
+	    -0.3f, -0.3f, 0.0f,     0.0f, 0.0f,
+		-0.3f, 0.3f, 0.0f,      0.0f, 1.0f, 
 	};
 
-	unsigned int indices[] = {  // note that we start from 0!
-		0, 1, 3,   // first triangle
-		1, 2, 3    // second triangle
+	unsigned int indices[] = {  
+		0, 1, 3,   
+		1, 2, 3  
 	};
 
 	unsigned int VBO;
@@ -76,11 +78,11 @@ int main() {
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	
+	//Pass vertex data to shader
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 
+	//Pass texture cords to shader
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
 
@@ -93,14 +95,17 @@ int main() {
 	unsigned int texture;
 	glGenTextures(1, &texture);
 	glBindTexture(GL_TEXTURE_2D, texture);
-	// set the texture wrapping/filtering options (on the currently bound texture object)
+
+	// set the texture wrapping/filtering options
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
 	// load and generate the texture
 	int width, height, nrChannels;
 	stbi_set_flip_vertically_on_load(true);
+
 	unsigned char *data = stbi_load("dvd2.png", &width, &height, &nrChannels, 0);
 	if (data)
 	{
@@ -109,7 +114,7 @@ int main() {
 	}
 	else
 	{
-		std::cout << "Failed to load texture" << std::endl;
+		std::cerr << "Failed to load texture" << std::endl;
 	}
 
 	stbi_image_free(data);
