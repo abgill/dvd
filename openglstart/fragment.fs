@@ -11,6 +11,6 @@ void main()
     FragColor = texture(ourTexture, TexCoord);
 
     if(FragColor.w > .99f){
-        FragColor = FragColor + (vertexColor / 1.5 +.2);
+        FragColor = FragColor + .4 + vertexColor   ;
     }
 }

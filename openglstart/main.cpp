@@ -1,32 +1,19 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include<iostream>
-#include"Shader.h"
+#include"shader.h"
 #include"stb_image.h"
+#include <chrono>
+#include <thread>
 
-//#pragma comment(linker, "/SUBSYSTEM:windows /ENTRY:mainCRTStartup")
+#pragma comment(linker, "/SUBSYSTEM:windows /ENTRY:mainCRTStartup")
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 
 void processInput(GLFWwindow *window);
 
-extern "C" {  // Just linking to random nvida lib to get it to run on dedicated card	
-	_declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
-}
-
-const char *vertexShaderSource = "#version 330 core\n"
-	"layout (location = 0) in vec3 aPos;\n"
-	"void main()\n"
-	"{\n"
-	"   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-	"}\0";
-
-const char *fragmentShaderSource = "#version 330 core\n"
-	"out vec4 FragColor;\n"
-	"void main()\n"
-	"{\n"
-	"   FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
-	"}\n\0";
+const unsigned int height = 1080;
+const unsigned int width = 1920;
 
 int main() {
 	
@@ -34,10 +21,12 @@ int main() {
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	glfwWindowHint(GLFW_SAMPLES, 4);
+	
 	//glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
 
-	GLFWwindow* window = glfwCreateWindow(800, 600, "LearnOpenGL", NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow(width, height, "LearnOpenGL", glfwGetPrimaryMonitor(), NULL);
 	if (window == NULL)
 	{
 		std::cout << "Failed to create GLFW window" << std::endl;
@@ -52,23 +41,17 @@ int main() {
 		return -1;
 	}
 
-	glViewport(0, 0, 800, 600);
+	glViewport(0, 0, width, height);
 
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
-
-
-	float verticies[] = {
-	0.9f, 0.9f, 0.0f,
-	 0.9f, 0.95f, 0.0f,
-	 0.99f,  0.99f, 0.0f
-	};
+	glEnable(GL_MULTISAMPLE);
 
 	float rectangle[] = {
-		0.5f,  0.5f, 0.0f,		1.0f, 1.0f,
-		0.5f, -0.5f, 0.0f,		1.0f, 0.0f,
-		-0.5f, -0.5f, 0.0f,     0.0f, 0.0f,
-		 -0.5f, 0.5f, 0.0f,		0.0f, 1.0f, 
+		0.3f,  0.3f, 0.0f,		1.0f, 1.0f,
+		0.3f, -0.3f, 0.0f,		1.0f, 0.0f,
+		-0.3f, -0.3f, 0.0f,     0.0f, 0.0f,
+		 -0.3f, 0.3f, 0.0f,		0.0f, 1.0f, 
 	};
 
 	unsigned int indices[] = {  // note that we start from 0!
@@ -76,23 +59,15 @@ int main() {
 		1, 2, 3    // second triangle
 	};
 
-	unsigned int VBOs[2];
-	unsigned int VAOs[2];
-	glGenVertexArrays(2, VAOs);
-	glGenBuffers(2, VBOs);
-	glBindVertexArray(VAOs[0]);
+	unsigned int VBO;
+	unsigned int VAO;
+	glGenVertexArrays(1, &VAO);
+	glGenBuffers(1, &VBO);
 
-	glBindBuffer(GL_ARRAY_BUFFER, VBOs[0]);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(verticies), verticies, GL_STATIC_DRAW);
-
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0);
-
-	glBindBuffer(GL_ARRAY_BUFFER, VBOs[1]);
-	glBindVertexArray(VAOs[1]);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBindVertexArray(VAO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(rectangle), rectangle, GL_STATIC_DRAW);
 
-	//glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 
 	unsigned int EBO;
@@ -136,44 +111,32 @@ int main() {
 	{
 		std::cout << "Failed to load texture" << std::endl;
 	}
+
 	stbi_image_free(data);
 
-	
 
 	float borderColor[] = { 1.0f, 1.0f, 0.0f, 1.0f };
 	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
 
 	float angle = 12.0f;
-	float velocity_vector[2] = {5, 10};
+	float velocity_vector[2] = {2.75, 5};
 	float xoffset = 0.0f;
 	float yoffset = 0.0f;
 
 	while (!glfwWindowShouldClose(window))
 	{
+		std::this_thread::sleep_for(std::chrono::milliseconds(1000/60));
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 		processInput(window);
 
 		shader.use();
 
-		/*float timeValue = glfwGetTime();
-		float xoffset = (sin(timeValue) / 2.0f) + 0.4f / 2.5f ;
-		float yoffset = (cos(timeValue) / 2.0f) + 0.4f / 2.5f ;*/
-		
-		//sin(yoffset * 180)* 45
-
-		if (xoffset + .5 > 1.0f) {
-			
+		//reverse dirrection if hit edge
+		if (xoffset + .3 > 1.0f || xoffset - .3 < -1.0f) {	
 			velocity_vector[0] *= -1;
 		}
-		else if (yoffset + .5 > 1.0f) {
-			velocity_vector[1] *= -1;
-		}
-		if (xoffset - .5 < -1.0f) {
-
-			velocity_vector[0] *= -1;
-		}
-		else if (yoffset - .5 < -1.0f) {
+		else if (yoffset + .3 > 1.0f || yoffset - .3 < -1.0f) {
 			velocity_vector[1] *= -1;
 		}
 
@@ -184,10 +147,8 @@ int main() {
 		shader.setFloat("xoffset", xoffset);
 		shader.setFloat("yoffset", yoffset);
 
-		/*glBindVertexArray(VAOs[0]);
-		glDrawArrays(GL_TRIANGLES, 0, 3);*/
 
-		glBindVertexArray(VAOs[1]);
+		glBindVertexArray(VAO);
 		glBindTexture(GL_TEXTURE_2D, texture);
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 		
